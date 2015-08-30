@@ -11,7 +11,7 @@ using namespace std;
 
 #define SIZE 1000007
 
-vector< pair<int, int> > hashTable[SIZE];
+vector< pair<int, int> > hashTable(SIZE, pair<int, int>());
 int n;
 string s;
 
@@ -30,32 +30,10 @@ int powMod(int a, int ex, int m) {
 	return (int) temp;
 }
 
-int compareSubstring(int a, int b) {
-	for (int i = 0; i < n; i++) {
-		if (s[a + i] != s[b + i]) {
-			return s[a + i] - s[b + 1];
-		}
-	}
-	return 0;
-}
-
 void insert(int index, int hash, int number) {
-	vector< pair<int, int> >& entry = hashTable[hash];
-	// int i;
-	// for (i = 0; i < entry.size(); i++) {
-	// 	if (compareSubstring(entry[i].first, index) == 0) {
-	// 		entry[i].second += number;
-	// 		break;
-	// 	}
-	// }
-	// if (i >= entry.size()) {
-	// 	entry.push_back(make_pair(index, number));
-	// }
-	if (entry.size() == 0) {	// 碰运气过了
-		entry.push_back(make_pair(index, number));
-	} else {
-		entry[0].second += number;
-	}
+	pair<int, int>& entry = hashTable[hash];
+	entry.first = index;
+	entry.second += number;
 }
 
 void insert(int index, int hash) {
@@ -72,47 +50,32 @@ int calHashOfRepeatChar(char repeatChar) {
 	return hash;
 }
 
+int compareSubstring(int a, int b) {
+	for (int i = 0; i < n; i++) {
+    	if (s[a + i] != s[b + i]) {
+      		return s[a + i] - s[b + 1];
+    	}
+  	}
+  	return 0;
+}
+
 void printAns() {
 	int maxCount = 0;
 	int mostSubstring = 0;
 	for (int i = 0; i < SIZE; i++) {
-		for (int j = 0; j < hashTable[i].size(); j++) {
-			if (hashTable[i][j].second > maxCount) {
-				maxCount = hashTable[i][j].second;
-				mostSubstring = hashTable[i][j].first;
-			} else if (hashTable[i][j].second == maxCount) {
-				if (compareSubstring(mostSubstring, hashTable[i][j].first) > 0) {
-					mostSubstring = hashTable[i][j].first;
-				}
+		if (hashTable[i].second == 0) {
+			continue;
+		}
+		if (hashTable[i].second > maxCount) {
+			maxCount = hashTable[i].second;
+			mostSubstring = hashTable[i].first;
+		} else if (hashTable[i].second == maxCount) {
+			if (compareSubstring(mostSubstring, hashTable[i].first) > 0) {
+				mostSubstring = hashTable[i].first;
 			}
 		}
 	}
 	printf("%s %d\n", s.substr(mostSubstring, n).c_str(), maxCount);
-}
-
-void preprocess() {
-	string newString;
-	char oldChar = s[0];
-	newString.push_back(oldChar);
-	int count = 1;
-	for (int i = 1; i < s.length(); i++) {
-		if (s[i] == oldChar) {
-			count++;
-		} else {
-			if (count > n) {
-				insert(newString.length() - n, calHashOfRepeatChar(oldChar), count - n);
-			}
-			oldChar = s[i];
-			count = 1;
-		}
-		if (count <= n) {
-			newString.push_back(s[i]);
-		}
-	}
-	if (count > n) {
-		insert(newString.length() - n, calHashOfRepeatChar(oldChar), count - n);
-	}
-	s = newString;
 }
 
 int main() {
@@ -121,8 +84,6 @@ int main() {
 	char temp[1048578];
 	gets(temp);
 	s = temp;
-
-	preprocess();
 
 	int hash = 0;
 	int i;
