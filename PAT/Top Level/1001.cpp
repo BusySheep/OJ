@@ -1,202 +1,123 @@
+#include <iostream>
 #include <cstdio>
-#include <algorithm>
 #include <vector>
+#include <algorithm>
 #include <climits>
 using namespace std;
 
-class BattleCitys {
+int n;
+int m;
+vector<vector<pair<int, int> > > citys;
+vector<pair<int, pair<int, int> > > destroyedRoads;
 
-public:
-	BattleCitys(int n) : citys(n, vector<int>()) {}
-
-private:
-	vector<vector<int>> citys;
-	vector<pair<int, pair<int, int>>> badRoads;//cost, city1, city2
-
-
-	void doFindArt(int v, int parent, vector<int>& art) {
-		static vector<int> num(citys.size(), 0);
-		static vector<int> low(citys.size(), 0);
-		static vector<bool> artFlag(citys.size(), false);
-		static int counter = 0;
-
-		int childCount = 0;
-		low[v] = num[v] = ++counter;
-		for (int i = 0; i < citys[v].size(); i++) {
-			int w = citys[v][i];
-			if (!num[w]) {
-				childCount++;
-				doFindArt(w, v, art);
-				if (parent >= 0 && low[w] >= num[v] && artFlag[v] == false) {
-					art.push_back(v);
-					artFlag[v] = true;	//prevent push twice
-				}
-				else if (parent < 0 && childCount > 1 && artFlag[v] == false) {	//the root has more than one child, so it is a articulation point
-					art.push_back(v);
-					artFlag[v] = true;
-				}
-				low[v] = min(low[v], low[w]);
-			}
-			else if (parent >= 0 && parent != w) {	//back edge
-				low[v] = min(low[v], num[w]);
-			}
-		}
-	}
-
-	int getRoot(int v, vector<int>& disjSet) {
-		if (disjSet[v] == -1) {
-			return v;
-		}
-		else {
-			return disjSet[v] = getRoot(disjSet[v], disjSet);
-		}
-	}
-
-	void merge(int v, int w, vector<int>& disjSet) {
-		int root1 = getRoot(v, disjSet);
-		int root2 = getRoot(w, disjSet);
-		if (root1 != root2) {
-			disjSet[root1] = root2;
-		}
-		else {
-			exit(1);
-		}
-	}
-
-	void initialDisjSet(int artPoint, vector<int>& disjSet, int& areaNumber) {
-		vector<bool> visited(citys.size(), false);
-		for (int i = 0; i < citys.size(); i++) {
-			dfs(i, disjSet, artPoint, visited, areaNumber);	//initial the disjSet
-		}
-		/*
-		从
-		for (int i = 0; i < citys[artPoint].size(); i++) {
-			dfs(citys[artPoint][i], disjSet, artPoint, visited, areaNumber);	//initial the disjSet
-		}
-		改为了
-		for (int i = 0; i < citys.size(); i++) {
-			dfs(i, disjSet, artPoint, visited, areaNumber);	//initial the disjSet
-		}
-		就对了
-		目前还未想明白为什么
-		*/
-	}
-
-	void dfs(int v, vector<int>& disjSet, int art, vector<bool>& visited, int& areaNumber) {
-		if (v == art) return;
-		if (visited[v]) return;
-		visited[v] = true;
-		for (int i = 0; i < citys[v].size(); i++) {
-			if (visited[citys[v][i]] == false && citys[v][i] != art) {
-				merge(v, citys[v][i], disjSet);
-				areaNumber--;
-				dfs(citys[v][i], disjSet, art, visited, areaNumber);
-			}
-		}
-	}
-
-public:
-	vector<int> findArt() {
-		vector<int> art;
-		//找割点的程序目前还有bug
-		//doFindArt(0, -1, art);
-		for (int i = 0; i < citys.size(); i++) {
-			art.push_back(i);
-		}
-		return art;
-	}
-
-	vector<int> findMostImportantCity() {
-		sort(badRoads.begin(), badRoads.end());
-		vector<int> art = findArt();
-		int maxTotalCost = 0;
-		vector<int> ans;
-		bool repairFlag = false;
-
-		for (int artIndex = 0; artIndex < art.size(); artIndex++) {
-			int areaNumber = citys.size() - 1;
-			vector<int> disjSet(citys.size(), -1);
-			int artPoint = art[artIndex];
-			initialDisjSet(artPoint, disjSet, areaNumber);
-
-			int totalCost = 0;
-			for (int i = 0; i < badRoads.size() && areaNumber > 1; i++) {
-				int& c1 = badRoads[i].second.first;
-				int& c2 = badRoads[i].second.second;
-				if (c1 != artPoint && c2 != artPoint) {
-					if (getRoot(c1, disjSet) != getRoot(c2, disjSet)) {
-						totalCost += badRoads[i].first;
-						merge(c1, c2, disjSet);
-						repairFlag = true;
-						areaNumber--;
-					}
-				}
-			}
-			//whether the whole country is connected
-			if (areaNumber > 1) {
-				//the whole country is not connected
-				repairFlag = true;
-				totalCost = INT_MAX;
-			}
-			if (totalCost > maxTotalCost) {
-				ans.clear();
-				ans.push_back(artPoint);
-				maxTotalCost = totalCost;
-			}
-			else if (totalCost == maxTotalCost) {
-				ans.push_back(artPoint);
-			}
-		}
-		sort(ans.begin(), ans.end());
-		if (repairFlag) {
-			return ans;
-		}
-		else {
-			return vector<int>();
-		}
-	}
-
-	void addUsingRoad(int c1, int c2) {
-		citys[c1].push_back(c2);
-		citys[c2].push_back(c1);
-	}
-
-	void addDestroyedRoad(int c1, int c2, int cost) {
-		badRoads.push_back(make_pair(cost, make_pair(c1, c2)));
-	}
-
-};
-
-int main(void) {
-	int n, m;
-	scanf("%d%d", &n, &m);
-	if (m <= 0) {
-		puts("0");
-		return 0;
-	}
-	BattleCitys citys(n);
+void input() {
+	cin >> n >> m;
+	citys.resize(n);
 	for (int i = 0; i < m; i++) {
-		int c1, c2;
-		int cost;
-		int status;
-		scanf("%d%d%d%d", &c1, &c2, &cost, &status);
-		c1--;
-		c2--;
-		if (status) {
-			citys.addUsingRoad(c1, c2);
-		}
-		else {
-			citys.addDestroyedRoad(c1, c2, cost);
+		int city1, city2, cost, status;
+		cin >> city1 >> city2 >> cost >> status;
+		city1--;
+		city2--;
+		if (status == 1) {
+			citys[city1].push_back(make_pair(city2, cost));
+			citys[city2].push_back(make_pair(city1, cost));
+		} else {
+			destroyedRoads.push_back(make_pair(cost, make_pair(city1, city2)));
 		}
 	}
-
-	vector<int> importantCity = citys.findMostImportantCity();
-	for (int i = 0; i < importantCity.size(); i++) {
-		printf("%d%c", importantCity[i] + 1, i < importantCity.size() - 1 ? ' ' : '\n');
-	}
-	if (importantCity.size() == 0) {
-		printf("0\n");
-	}
-	return 0;
 }
 
+int findRoot(int x, vector<int>& dijSet) {
+	if (dijSet[x] == x) {
+		return x;
+	} else {
+		return dijSet[x] = findRoot(dijSet[x], dijSet);
+	}
+}
+
+void mergeDijSet(int a, int b, vector<int>& dijSet) {
+	int rootA = findRoot(a, dijSet);
+	int rootB = findRoot(b, dijSet);
+	if (rootA != rootB) {
+		dijSet[rootB] = rootA;
+	}
+}
+
+void dfs(int city, int occupiedCity, vector<bool>& visited, vector<int>& dijSet) {
+	visited[city] = true;
+	for (int i = 0; i < citys[city].size(); i++) {
+		int adjCity = citys[city][i].first;
+		if (!visited[adjCity] && adjCity != occupiedCity) {
+			mergeDijSet(city, adjCity, dijSet);
+			dfs(adjCity, occupiedCity, visited, dijSet);
+		}
+	}
+}
+
+int calculateRepairCost(int occupiedCity) {
+	vector<int> dijSet(n, 0);
+	vector<bool> visited(n, false);
+	for (int i = 0; i < n; i++) {
+		dijSet[i] = i;
+	}
+	for (int i = 0; i < n; i++) {
+		if (!visited[i] && i != occupiedCity) {
+			dfs(i, occupiedCity, visited, dijSet);
+		}
+	}
+	int result = 0;
+	for (int i = 0; i < destroyedRoads.size(); i++) {
+		int city1 = destroyedRoads[i].second.first;
+		int city2 = destroyedRoads[i].second.second;
+		if (city1 == occupiedCity || city2 == occupiedCity) {
+			continue;
+		}
+		if (findRoot(city1, dijSet) != findRoot(city2, dijSet)) {
+			mergeDijSet(city1, city2, dijSet);
+			result += destroyedRoads[i].first;
+		}
+	}
+	int root = -1;
+	for (int i = 0; i < n; i++) {
+		if (i != occupiedCity) {
+			if (root == -1) {
+				root = findRoot(i, dijSet);
+			}
+			if (root != findRoot(i, dijSet)) {
+				result = INT_MAX;
+			}
+		}
+	}
+	return result;
+}
+
+int main() {
+	input();
+	sort(destroyedRoads.begin(), destroyedRoads.end());
+	int maxRepairCost = 0;
+	vector<int> ans;
+	for (int i = 0; i < n; i++) {
+		int repairCost = calculateRepairCost(i);
+		if (repairCost == 0) {
+			continue;
+		}
+		if (maxRepairCost < repairCost) {
+			maxRepairCost = repairCost;
+			ans.clear();
+			ans.push_back(i);
+		} else if (maxRepairCost == repairCost) {
+			ans.push_back(i);
+		}
+	}
+	if (ans.size() == 0) {
+		printf("0");
+	}
+	for (int i = 0; i < ans.size(); i++) {
+		printf("%d", ans[i] + 1);
+		if (i < ans.size() - 1) {
+			putchar(' ');
+		}
+	}
+	puts("");
+	return 0;
+}
