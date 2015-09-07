@@ -1,3 +1,14 @@
+#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct ListNode {
+    int val;
+    ListNode *next;
+    ListNode(int x) : val(x), next(NULL) {}
+};
 /**
  * Definition for singly-linked list.
  * struct ListNode {
@@ -9,23 +20,15 @@
 class Solution {
 private:
     ListNode* iterativelyReverse(ListNode* head) {
-        if (head == NULL) return NULL;
-        stack<ListNode*> s;
-        while (head != NULL) {
-            s.push(head);
-            head = head->next;
+        auto list = head;
+        head = NULL;
+        while (list) {
+            auto next = list->next;
+            list->next = head;
+            head = list;
+            list = next;
         }
-        ListNode* result = s.top();
-        s.pop();
-        result->next = NULL;
-        ListNode* list = result;
-        while (!s.empty()) {
-            list->next = s.top();
-            s.pop();
-            list = list->next;
-            list->next = NULL;
-        }
-        return result;
+        return head;
     }
     pair<ListNode*, ListNode*> doRecursivelyReverse(ListNode* head) {
         if (head->next == NULL) return make_pair(head, head);
@@ -40,7 +43,25 @@ private:
     }
 public:
     ListNode* reverseList(ListNode* head) {
-        // return iterativelyReverse(head);
-        return recursivelyReverse(head);
+        return iterativelyReverse(head);
+        // return recursivelyReverse(head);
     }
 };
+
+ListNode* genList(vector<int> input) {
+    if (input.size() == 0) return NULL;
+    ListNode* head = new ListNode(input[0]);
+    auto list = head;
+    for (int i = 1; i < input.size(); i++) {
+        list->next = new ListNode(input[i]);
+        list = list->next;
+    }
+    return head;
+}
+
+int main() {
+    vector<int> input = {1, 2};
+    auto head = genList(input);
+    Solution().reverseList(head);
+    return 0;
+}
