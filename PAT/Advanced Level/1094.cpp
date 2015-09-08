@@ -1,54 +1,51 @@
+#include <iostream>
 #include <cstdio>
-#include <algorithm>
 #include <vector>
 #include <queue>
+#include <algorithm>
 using namespace std;
 
 int main() {
     int n;
     int m;
     scanf("%d%d", &n, &m);
-    vector<vector<int>> family(n + 1, vector<int>());
+    vector< vector<int> > family(n, vector<int>());
     for (int i = 0; i < m; i++) {
-        int id, k;
+        int id;
+        int k;
         scanf("%d%d", &id, &k);
+        id--;
         for (int j = 0; j < k; j++) {
-            int child;
-            scanf("%d", &child);
-            family[id].push_back(child);
+            int childId;
+            scanf("%d", &childId);
+            childId--;
+            family[id].push_back(childId);
         }
     }
-    queue<pair<int, int>> bfsQueue;
-    bfsQueue.push(make_pair(1, 1));
-    int maxGeneration = 0;
-    int maxPopulation = 0;
-    int count = 0;
-    int lastGeneration = 0;
-    while (!bfsQueue.empty()) {
-        int id = bfsQueue.front().first;
-        int generation = bfsQueue.front().second;
-        bfsQueue.pop();
-        if (lastGeneration != generation) {
-            if (count > maxPopulation) {
-                maxPopulation = count;
-                maxGeneration = lastGeneration;
-            }
-            lastGeneration = generation;
-            count = 1;
+    queue< pair<int, int> > q;
+    q.push(make_pair(0, 1));
+    int largestGeneration;
+    int largestPopulation = 0;
+    int currentGeneration;
+    int currentPopulation = 0;
+    while (!q.empty()) {
+        int id = q.front().first;
+        int generation = q.front().second;
+        q.pop();
+        if (generation == currentGeneration) {
+            currentPopulation ++;
+        } else {
+            currentGeneration = generation;
+            currentPopulation = 1;
         }
-        else {
-            count++;
+        if (largestPopulation < currentPopulation) {
+            largestPopulation = currentPopulation;
+            largestGeneration = currentGeneration;
         }
         for (int i = 0; i < family[id].size(); i++) {
-            bfsQueue.push(make_pair(family[id][i], generation + 1));
-        }
-        if (bfsQueue.empty()) {
-            if (count > maxPopulation) {
-                maxPopulation = count;
-                maxGeneration = generation;
-            }
+            q.push(make_pair(family[id][i], generation + 1));
         }
     }
-    printf("%d %d\n", maxPopulation, maxGeneration);
+    printf("%d %d\n", largestPopulation, largestGeneration);
     return 0;
 }
