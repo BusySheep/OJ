@@ -4,6 +4,7 @@
 #include <map>
 #include <algorithm>
 #include <set>
+#include <string>
 using namespace std;
 
 struct Time {
