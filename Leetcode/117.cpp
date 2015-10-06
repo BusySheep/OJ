@@ -10,27 +10,28 @@ class Solution {
 public:
     void connect(TreeLinkNode *root) {
         if (!root) return;
-        queue<pair<TreeLinkNode*, int>> q;
-        int currentLevel = 0;
+        auto node = root;
         TreeLinkNode* pre = nullptr;
-        q.push(make_pair(root, currentLevel));
-        while (!q.empty()) {
-            auto temp = q.front();
-            q.pop();
-            auto node = temp.first;
-            auto level = temp.second;
-            if (pre) {
-                if (level == currentLevel) {
-                    pre->next = node;
-                } else {
-                    pre->next = nullptr;
-                    currentLevel = level;
-                }
+        TreeLinkNode* nextHead = nullptr;
+        while (node) {
+            TreeLinkNode* firstChild = nullptr;
+            TreeLinkNode* lastChild = nullptr;
+            if (node->left && node->right) {
+                node->left->next = node->right;
+                firstChild = node->left;
+                lastChild = node->right;
+            } else if (node->left) {
+                firstChild = lastChild = node->left;
+            } else if (node->right) {
+                firstChild = lastChild = node->right;
             }
-            pre = node;
-            if (node->left) q.push(make_pair(node->left, level + 1));
-            if (node->right) q.push(make_pair(node->right, level + 1));
-            if (q.empty()) node->next = nullptr;
+            if (firstChild) {
+                if (!nextHead) nextHead = firstChild;
+                if (pre) pre->next = firstChild;
+                pre = lastChild;
+            }
+            node = node->next;
         }
+        connect(nextHead);
     }
 };
