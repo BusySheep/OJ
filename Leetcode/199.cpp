@@ -1,37 +1,35 @@
-#include <cstdio>
-#include <algorithm>
-#include <vector>
-using namespace std;
-
-
-//Definition for binary tree
-struct TreeNode {
-    int val;
-    TreeNode *left;
-    TreeNode *right;
-    TreeNode(int x) : val(x), left(NULL), right(NULL) {}
-};
-
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+ * };
+ */
 class Solution {
 public:
-    void doRightSideView(TreeNode *root, int level, vector<int>& result) {
-        if (root == NULL) {
-            return;
-        }
-        if (result.size() <= level) {
-            result.push_back(root->val);
-        }
-        else {
-            result[level] = root->val;
-        }
-        doRightSideView(root->left, level + 1, result);
-        doRightSideView(root->right, level + 1, result);
-    }
-    
-    vector<int> rightSideView(TreeNode *root) {
+    vector<int> rightSideView(TreeNode* root) {
         vector<int> result;
-        doRightSideView(root, 0, result);
+        if (!root) return result;
+        queue<pair<TreeNode*, int>> q;
+        int currentLevel = 0;
+        int previousElement = root->val;
+        q.push(make_pair(root, currentLevel));
+        while (!q.empty()) {
+            auto temp = q.front();
+            q.pop();
+            auto node = temp.first;
+            int level = temp.second;
+            if (level != currentLevel) {
+                result.push_back(previousElement);
+                currentLevel = level;
+            }
+            previousElement = node->val;
+            if (node->left) q.push(make_pair(node->left, level + 1));
+            if (node->right) q.push(make_pair(node->right, level + 1));
+        }
+        result.push_back(previousElement);
         return result;
     }
 };
-
